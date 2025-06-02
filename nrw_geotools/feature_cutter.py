@@ -5,7 +5,7 @@ import shapely.geometry
 import shapely.ops
 import uuid
 from IPython.display import clear_output as ipython_clear_output
-import ipyleaflet # For isinstance checks
+import ipyleaflet
 
 # Import from within the package
 from . import config as app_config

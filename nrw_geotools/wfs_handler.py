@@ -10,6 +10,7 @@ import shutil
 import ipyleaflet
 import uuid
 import copy
+import ipyleaflet
 
 
 # Import from within the package
