@@ -1,6 +1,7 @@
 import ipywidgets as widgets
 from . import config as app_config
 from . import state as app_state
+from IPython.display import display, clear_output as ipython_clear_output
 
 def create_widgets():
     widgets_dict = {}

@@ -3,8 +3,8 @@ from IPython.display import clear_output as ipython_clear_output
 
 # Import core logic functions from other modules
 from .wfs_handler import discover_feature_types, fetch_wfs_data
+from .feature_manager import handle_draw_control_actions # General handler
 from .feature_manager import (
-    handle_draw_control_actions,
     on_geojson_feature_click_callback_base,
     keep_selected_features,
     clear_selection,
@@ -17,11 +17,12 @@ from .feature_editor import (
 )
 from .feature_cutter import (
     start_cut_selected_features,
-    cancel_cut_operation,
-    _cutting_mode_draw_handler # Note: _cutting_mode_draw_handler is special
+    cancel_cut_operation, # This is the fixed import name
+    _cutting_mode_draw_handler # This is the specialized cutter draw logic
 )
 from .file_operations import save_selected_as_gml
-from . import config as app_config # To get DRAWN_FEATURES_LAYER_NAME if needed for wrappers
+from . import config as app_config
+from . import state as app_state # Import app_state here
 
 
 # --- Wrapper callback functions ---
@@ -34,9 +35,26 @@ def on_fetch_data_button_clicked(app_context):
     fetch_wfs_data(app_context)
 
 # Feature Management Callbacks
-def on_draw_control_action(draw_control_instance, action, geo_json, app_context):
-    # This one already matches the signature if we add app_context
-    handle_draw_control_actions(draw_control_instance, action, geo_json, app_context)
+def master_on_draw_handler(draw_control_instance, action, geo_json, app_context):
+    # Check app_state directly without needing to pass it everywhere if it's imported
+    # Or ensure app_context['state'] is used if preferred. Let's use app_context['state'] for consistency.
+    current_app_state = app_context['state']
+
+    if current_app_state.is_editing_feature:
+        # Editing mode has its own way of handling draw control data (usually through m.draw_control.data directly)
+        # The general draw handler should probably ignore 'created' events during an active edit session.
+        # The 'edited' events from the toolbar are still useful.
+        if action == 'edited':
+             with app_context['widgets']['status_output_widget']:
+                 print(f"Draw control: action='edited' during feature edit. Geometry: {geo_json.get('geometry', {}).get('type')}")
+        return # Or handle specific edit-related draw events if necessary
+
+    elif current_app_state.is_cutting_operation_active and current_app_state._cutting_draw_handler_active_flag:
+        # If in cutting mode, delegate to the cutting draw handler
+        _cutting_mode_draw_handler(draw_control_instance, action, geo_json, app_context)
+    else:
+        # Otherwise, use the general feature creation handler
+        handle_draw_control_actions(draw_control_instance, action, geo_json, app_context)
 
 # This function helps create the specific lambda needed for on_click events for GeoJSON layers
 def get_geojson_click_handler(app_context, layer_name_for_handler):
@@ -75,7 +93,7 @@ def cutting_draw_handler_wrapper(app_context):
     # This returns the actual handler function that ipyleaflet expects,
     # but with app_context baked in.
     def actual_handler(control_instance, action, geo_json):
-        _cutting_mode_draw_handler(control_instance, action, geo_json, app_context)
+        _cutting_mode_draw_handler(control_instance, action, geo_json, app_context) # This looks good
     return actual_handler
 
 

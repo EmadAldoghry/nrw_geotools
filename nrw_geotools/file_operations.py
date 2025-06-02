@@ -3,6 +3,7 @@
 import os
 import copy
 import geopandas as gpd
+import ipyleaflet
 
 # Import from within the package
 from . import config as app_config
@@ -53,7 +54,7 @@ def save_selected_as_gml(app_context):
                 continue
             
             layer_obj = m.find_layer(layer_name)
-            if layer_obj and isinstance(layer_obj, app_context['m'].GeoJSON): # Access GeoJSON via m instance
+            if layer_obj and isinstance(layer_obj, ipyleaflet.GeoJSON): # Access GeoJSON via m instance
                 # Iterate through features currently on the map for this layer
                 for feature_on_map in layer_obj.data.get('features', []):
                     # Check if this feature's _temp_id is in our selection dictionary for this layer

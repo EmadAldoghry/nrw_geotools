@@ -6,7 +6,8 @@ import geopandas as gpd # For saving kept features
 
 from . import config as app_config
 from . import state as app_state
-from .ui_manager import update_all_button_states, ipython_clear_output # For convenience
+from .ui_manager import update_all_button_states
+from IPython.display import clear_output as ipython_clear_output
 
 # This is the base function that will be wrapped by lambdas for specific layers
 def on_geojson_feature_click_callback_base(feature, layer_name, event_details, app_context):
